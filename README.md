@@ -40,7 +40,7 @@ As the rotating joint and the tensioning part of the machine are almost in the s
 
 ## Documentation
 
-The [Assembly Manual](MPEBS_Manual.pdf) provides a step-by-step guide to print and assemble your own KhordUino.
+The [Assembly Manual](KhordUino_Manual.pdf) provides a step-by-step guide to print and assemble your own KhordUino.
 
 ## License
 

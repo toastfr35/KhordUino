@@ -6,6 +6,9 @@
 
 Welcome to the KhordUino project, a 3D Printed Electronic Badminton Stringer. 
 
+https://github.com/toastfr35/KhordUino/assets/11369231/e21abeb8-c3cd-45fe-b324-fbe94404d06a
+
+
 ## Mechanical design
 
 A stringing machine usually comprises a stable frame, clamps to hold strings in place and a tensioning system to tighten strings. 

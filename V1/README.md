@@ -2,7 +2,7 @@
   <img width="300" src="images/logo2.png">
 </p>
 
-# KhordUino (3D Printed Electronic Badminton Stringer)
+# KhordUino (3D Printed Electronic Badminton Stringer) V1
 
 Welcome to the KhordUino project, a 3D Printed Electronic Badminton Stringer. 
 

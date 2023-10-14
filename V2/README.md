@@ -2,12 +2,12 @@
 
 ## Goals
 
-- Lower BOM cost
-- Fewer different parts to assemble
-- Use standard (still cheap) load cell
-- Easier wiring
-- Lighter
-- Event easier operation
+- Lower BOM cost.
+- Fewer different parts to assemble.
+- Use standard (still cheap) load cell.
+- Easier wiring.
+- Lighter, smaller.
+- Simplified stringing operation.
 
 ## Difference with V1
 

@@ -18,11 +18,11 @@
 - No linear bearings.
 - Different load cell (and placement of).
 - Battery powered (via adapters, e.g. Ryobi 18V battery).
-- Single limit switch (other limit enforce in software).
+- Single limit switch (other limit enforced in software).
 - A single 3 positions switch for stringing operation (pull, idle, release).
 - No LCD. Instead Bluetooth + Android/IOS App for settings.
 - Slightly longer legs for a bit more clearance.
-- Buzzer to indicate desired tansion is reached.
+- Buzzer to indicate desired tension is reached.
 
 
 ## What will be the same

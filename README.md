@@ -17,7 +17,7 @@ Electronic models have control panels for precision.
 The KhordUino design is quite different from most metal frame stringing machines. In these machines (see below), the rotating joint for the frame is quite far from the tensioning plane.
 
 <p align="center">
-  <img width="600" src="images/traditional_machine.png">
+  <img width="600" src="V1/images/traditional_machine.png">
 </p>
 
 
@@ -26,11 +26,11 @@ on the strings should be aligned as much as possible to minimise the moment (blu
 This is achieved by keeping the machine quite flat (which is also great for storage).
 
 <p align="center">
-  <img width="600" src="images/this_machine.png">
+  <img width="600" src="V1/images/this_machine.png">
 </p>
 
 <p align="center">
-  <img width="600" src="images/main.jpg">
+  <img width="600" src="V1/images/main.jpg">
 </p>
 
 

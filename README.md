@@ -1,3 +1,4 @@
+
 <p align="center">
   <img width="300" src="images/logo2.png">
 </p>
@@ -54,3 +55,7 @@ KhordUino © 2023 by Antoine Colin is licensed under CC BY-NC-SA 4.0
 KhordUino V1 is available now.
 
 KhordUino V2 is a work in progress and will be made available once fully tested.
+
+## Updates:
+
+- V1.1 (2024-05-27).  New firmware with easier calibration procedure. 

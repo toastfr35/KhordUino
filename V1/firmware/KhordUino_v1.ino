@@ -38,30 +38,26 @@ READY -> [+] -> PULL -> [-] -> RELEASE -> READY
       -> [M] -> SET_LBS -> [+/-/ok] -> READY 
 
 ***************************************/
-/*
-enum states { START,
-              INIT_POS,
-              SET_LBS,
-              READY,
-              PULL,
-              RELEASE };
-states current_state = START;
-void update_state(int button);
-*/
+
 
 /*********************************/
+
+#define version String("1.1")
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "HX711.h"
 #include <EEPROM.h>
 
+
 // LOAD CELL
 #define LOADCELL_DOUT_PIN 13  // green D13
 #define LOADCELL_SCK_PIN 12   // yellow D12
 HX711 loadcell;
+float f_a;
+float f_b;
 
-// stepper
+// Stepper
 #define EN 8     // stepper motor enable, low level effective
 #define X_DIR A3  //X axis, stepper motor direction control
 #define X_STP A2  //X axis, stepper motor control
@@ -83,13 +79,9 @@ HX711 loadcell;
 int button_pin[NB_BUTTONS] = { BUTTON_PIN_BLUE, BUTTON_PIN_WHITE, BUTTON_PIN_RED, BUTTON_PIN_LIMIT_PULL, BUTTON_PIN_LIMIT_PUSH };
 bool button_pressed[NB_BUTTONS] = { false };
 
-// Load Cell
-float f_a;// = 0.7125;
-float f_b;// = -30.258;
-
-
 // LCD
 LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2);
+
 
 /*********************************/
 unsigned long tension_int = 0;          // current load cell value
@@ -103,14 +95,14 @@ const unsigned int push_speed = 75;
 
 
 /*********************************/
-#define debug(X)
-//void debug(String msg) {Serial.println(msg);}
+//#define debug(X)
+void debug(String msg) {Serial.println(msg);}
 
 
 void stepper_disengage();
 void stepper_engage();
 
-
+void(* resetFunc) (void) = 0;//declare reset function at address 0
 
 
 /*********************************
@@ -131,10 +123,8 @@ void setup()
   setup_lcd();
   lcd.backlight();
   lcd.clear();
-  lcd.setCursor(2, 0);
-  lcd.print(" Badminton");
-  lcd.setCursor(2, 1);
-  lcd.print("Stringer 1.0");
+  lcd.setCursor(1, 0);
+  lcd.print("Khorduino " + version);
 
   // initialize loadcell
   loadcell.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN, 64);  // 128
@@ -155,10 +145,9 @@ void setup()
   }
 
   // read last configured target tension from eprom
-  target_tension_lbs = 180;
   EEPROM.get(0, target_tension_lbs);
-  if (target_tension_lbs > 300) target_tension_lbs = 300;
-  if (target_tension_lbs < 180) target_tension_lbs = 180;
+  if (target_tension_lbs > 300) {target_tension_lbs = 300; EEPROM.put(0, target_tension_lbs);}
+  if (target_tension_lbs < 180) {target_tension_lbs = 180; EEPROM.put(0, target_tension_lbs);}
   EEPROM.get(4, f_a);
   EEPROM.get(8, f_b);
 
@@ -166,7 +155,7 @@ void setup()
   debug ("f_a = " + String (f_a));
   debug ("f_b = " + String (f_b));
 
-  delay(500);
+  delay(1500);
 
   main_menu(); 
 
@@ -194,10 +183,6 @@ void load_cell_test();
 
 void loop() 
 {
-
-  //load_cell_test(); return;
-  //pingpong(); return;
-
   enum states { RESET,
                 SETUP,
                 SET_LBS,
@@ -383,8 +368,11 @@ void show_tension()
 unsigned long int_to_lbs(unsigned int v)
 {
   // lbs = (v - b) / a
+  int r;
   float f_v = (float)v;
-  return (int)((f_a * f_v) + f_b);
+  r = (int)(10.0 * ((f_a * f_v) + f_b));
+  if (r < 0) r = 0;
+  return r;
 }
 
 /*********************************
@@ -596,8 +584,9 @@ void user_set_target_lbs()
 
   if (new_target_tension_lbs != target_tension_lbs) {
     target_tension_lbs = new_target_tension_lbs;
-    EEPROM.update(0,target_tension_lbs>>8);
-    EEPROM.update(1,target_tension_lbs & 0xFF);
+    unsigned int v;
+    EEPROM.get(0, v);
+    if (v != target_tension_lbs) EEPROM.put(0, target_tension_lbs);
   }
 }
 
@@ -633,7 +622,6 @@ int do_pull()
   set_direction_pull();
   motors_n_steps(0, pull_speed, true);
 }
-
 
 /*********************************
  * Hold the string. Return: 0 -> pull, 1-> release, 2 -> SET_LBS
@@ -680,96 +668,6 @@ void do_release()
 
 
 /********************************************************/
-/*                    FOR TESTING ONLY                  */
-/********************************************************/
-
-/*
-void pingpong()
-{
-  int x,i;
-  int delay_micro_seconds = 200;
-
-  target_tension_lbs = 230;
-  tension_display_enabled = 1;
-
-  stepper_engage();
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Push...");    
-  set_direction_push();
-  motors_n_steps (0, push_speed, false);
-
-  while(1) {
-    target_tension_lbs += 10;
-    if (target_tension_lbs > 300) return;
-    stepper_engage();
-
-    lcd.clear();
-    lcd.setCursor(0, 1);
-    lcd.print("Push...");    
-    set_direction_push();
-    motors_n_steps (10000, push_speed, false);
-
-    lcd.clear();
-    lcd.setCursor(0, 1);
-    lcd.print("Pull " + String(target_tension_lbs / 10));    
-    set_direction_pull();
-    motors_n_steps (0, pull_speed, true);   
-
-    lcd.clear();
-    lcd.setCursor(0, 1);
-    lcd.print("Hold " + String(target_tension_lbs / 10));    
-
-    for (i=0;i<5*10;i++) {
-      update_tension();
-      if (!limit_switch_pull()) {
-        if (tension_lbs < target_tension_lbs) motors_n_steps(16, pull_speed*4, true);
-      }
-      delay(200);
-    }
-
-    stepper_disengage();
-    delay(1000);
-    update_tension();
-
-  }
-}
-*/
-
-void tune_load_cell()
-{
-  int button;
-
-  target_tension_lbs = 180;
-  tension_display_enabled = 1;
-
-  stepper_engage();
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Push...");    
-  set_direction_push();
-  motors_n_steps (0, push_speed, false);
-  delay(1000);
-  set_direction_pull();
-  motors_n_steps (0, pull_speed, true);   
-
-  while(1) {
-    button = wait_button_press(200);
-    if (button & (1 << BUTTON_BLUE)) {target_tension_lbs--;}
-    if (button & (1 << BUTTON_RED))  {target_tension_lbs++;}
-    if (button & (1 << BUTTON_WHITE)) {set_direction_push();motors_n_steps(8, pull_speed, false);set_direction_pull();}
-
-    update_tension();
-    if (!limit_switch_pull()) {
-      if (tension_lbs < target_tension_lbs) motors_n_steps(16, pull_speed*4, true);
-    }
-    lcd.setCursor(0, 1);
-    lcd.print(String(tension_int) + " " + String (target_tension_lbs));    
-  }
-}
-
-
-/********************************************************/
 /*                                                      */
 /********************************************************/
 
@@ -777,9 +675,10 @@ void show_version()
 {
   lcd.clear();
   lcd.setCursor(0,0); 
-  lcd.print (" Version 1.0");
+  lcd.print (" Version " + version);
   delay (3000);
 }
+
 
 void show_eeprom()
 {
@@ -794,7 +693,7 @@ void show_eeprom()
   delay (1000);
 
   EEPROM.get(8, v2);
-  lcd.clear(); lcd.setCursor(0,0); lcd.print ("f_a = " + String (v2));
+  lcd.clear(); lcd.setCursor(0,0); lcd.print ("f_b = " + String (v2));
   delay (1000);
 }
 
@@ -822,44 +721,148 @@ void test()
   delay (3000);
 }
 
+
 void calibrate()
 {
   int button;
-
-  target_tension_lbs = 200;
-  tension_display_enabled = 1;
+  tension_display_enabled = 0;
+  unsigned int target_tension_int = 150;
+  unsigned int values[16];
+  unsigned int idx = 0;
+  bool last_cmd_is_push = false;
+  bool last_cmd_is_pull = false;
 
   stepper_engage();
-  lcd.clear();
-  lcd.setCursor(0, 0);
   set_direction_push();
   motors_n_steps (0, push_speed, false);
   delay(1000);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Attach scale");
+  lcd.setCursor(0, 1);
+  lcd.print("Press when ready");
+  button = wait_button_press();
+  lcd.clear();
   set_direction_pull();
-  motors_n_steps (0, pull_speed, true);   
+  motors_n_steps(128, pull_speed*4, false);
+  unsigned int v1 = 0;
+  unsigned int v2 = 0;
 
-  while(1) {
-    button = wait_button_press(200);
-    if (button & (1 << BUTTON_BLUE))  {target_tension_lbs--;}
-    if (button & (1 << BUTTON_RED))   {target_tension_lbs+=15;}
-    if (button & (1 << BUTTON_WHITE)) {set_direction_push();motors_n_steps(8, pull_speed, false);set_direction_pull();}
+  for (int tgt=10; tgt<=15; tgt+=5) 
+  {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print(String("Target = ") + String(tgt) + String(" Kg"));
 
-    update_tension();
-    if (!limit_switch_pull()) {
-      if (tension_lbs < target_tension_lbs) motors_n_steps(16, pull_speed*4, true);
-    }
-    lcd.setCursor(0, 1);
-    lcd.print(" -    " + String(tension_int) + "    +");
+    int incr = 40;
+    int decr = 20;
+    int steps = 128;
+    int speed_mult = 4;
+    int fine_tune = 0;
 
-    if (limit_switch_pull()) {debug ("abort"); break;}
+
+    while(1) {
+      button = wait_button_press(50);
+      if (button & (1 << BUTTON_BLUE))  {target_tension_int-=decr; last_cmd_is_push=true; last_cmd_is_pull=false;}
+      if (button & (1 << BUTTON_RED))   {target_tension_int+=incr; last_cmd_is_push=false; last_cmd_is_pull=true;}
+      if (button & (1 << BUTTON_WHITE)) {
+        last_cmd_is_push=false; 
+        last_cmd_is_pull=false;
+        if (fine_tune) {
+          unsigned int avg = 0;
+          for (int i = 0; i < 16; i++) avg += values[i];
+          debug(String (">> ") + String(tgt) + String ("Kg => ") + String(avg/16));
+          if (tgt==10) v1 = avg/16  ;
+          if (tgt==15) v2 = avg/16  ;
+          break;
+        }
+        fine_tune = 1;
+        steps = 4;
+        speed_mult = 1;
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print(String("Fine tune ") + String(tgt) + String(" Kg"));
+        delay(1000);
+      }
+
+      update_tension();
+
+      if ((tension_int != -1) && (!limit_switch_pull())) 
+      {
+        if (fine_tune) {
+          values[idx] = tension_int;
+          idx = (idx + 1) % 16;
+        }
+
+        if ((tension_int < target_tension_int) && (last_cmd_is_pull || fine_tune)) {
+          set_direction_pull();
+          motors_n_steps(steps, pull_speed*speed_mult, false);
+        }
+        if ((tension_int > target_tension_int) && (last_cmd_is_push || fine_tune)) {
+          set_direction_push();
+          motors_n_steps(steps/2, push_speed*speed_mult, false);
+        }
+      }
+
+      lcd.setCursor(0, 1);
+      int delta = ((int)target_tension_int)-((int)tension_int);
+      lcd.print(" -    " + String(delta) + "    +");
+      if (limit_switch_pull()) {debug ("abort"); break;}
+    }    
   }
 
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Calibrated... ");
   set_direction_push();
   motors_n_steps (0, push_speed, false);
   stepper_disengage();
-  tension_display_enabled = 0;
 
+  // Show and save calibration data
+  float f_a = (33.07-22.05) / (float)(v2-v1);
+  float f_b = -((float)(3*v1 - 2*v2)) * f_a;
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(String("v1 = ") + String(v1));
+  lcd.setCursor(0, 1);
+  lcd.print(String("v2 = ") + String(v2));
+  delay (5000);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(String("f_a = ") + String(f_a));
+  lcd.setCursor(0, 1);
+  lcd.print(String("f_b = ") + String(f_b));
+  EEPROM.put(4, f_a);
+  EEPROM.put(8, f_b);
+  delay (5000);
 }
+
+
+
+void check()
+{
+  tension_display_enabled = 1;
+  stepper_engage();
+  set_direction_push();
+  motors_n_steps (0, push_speed, false);
+
+  lcd.clear();
+
+  while(1) {
+    unsigned int button = wait_button_press(100);
+    if ((button & (1 << BUTTON_BLUE)) && (!limit_switch_push())) {set_direction_push(); motors_n_steps(128, push_speed, false);}
+    if ((button & (1 << BUTTON_RED))  && (!limit_switch_pull())) {set_direction_pull(); motors_n_steps(128, pull_speed, false);}
+    if (button & (1 << BUTTON_WHITE)) {break;}
+  }
+  stepper_disengage();
+  tension_display_enabled = 0;
+  lcd.clear();
+}
+
+
 
 
 /********************************************************/
@@ -944,6 +947,7 @@ void set_coefficient(char v)
     }
 
     delay (2000);
+    resetFunc(); //call reset 
   }
 }
 
@@ -1013,7 +1017,11 @@ void setup_lcd() {
   lcd.createChar(3, ret2);
 }
 
-/* Menus */
+
+/********************************************************/
+/* Menus                                                */
+/********************************************************/
+
 
 t_menu_item menu_info_data[] = 
 {
@@ -1026,6 +1034,7 @@ t_menu_item menu_info_data[] =
 t_menu_item menu_setup_data[] = 
 {
   {"Test",        NULL, 0,  &test},
+  {"Check",       NULL, 0,  &check},
   {"Calibrate",   NULL, 0,  &calibrate},
   {"Set param A", NULL, 0,  &set_coefficient_A},
   {"Set param B", NULL, 0,  &set_coefficient_B},
@@ -1043,10 +1052,6 @@ t_menu_item main_menu_data[] =
 };
 
 
-
-
-
-
 char * center_padding(char * str)
 {
   int length = strlen(str);
@@ -1058,7 +1063,6 @@ char * center_padding(char * str)
   for (i=0;i<length;i++) result[padd+i] = str[i];
   return (result);
 }
-
 
 
 int generic_menu (void * menu_data)
@@ -1103,6 +1107,8 @@ int generic_menu (void * menu_data)
 }
 
 
+
+
 void main_menu()
 {
   generic_menu(main_menu_data);
@@ -1111,14 +1117,79 @@ void main_menu()
 
 
 
+
+
+
+
+
+
+/********************************************************/
+/*                    FOR TESTING ONLY                  */
+/********************************************************/
+
+/*
+void pingpong()
+{
+  int x,i;
+  int delay_micro_seconds = 200;
+
+  target_tension_lbs = 230;
+  tension_display_enabled = 1;
+
+  stepper_engage();
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Push...");    
+  set_direction_push();
+  motors_n_steps (0, push_speed, false);
+
+  while(1) {
+    target_tension_lbs += 10;
+    if (target_tension_lbs > 300) return;
+    stepper_engage();
+
+    lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print("Push...");    
+    set_direction_push();
+    motors_n_steps (10000, push_speed, false);
+
+    lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print("Pull " + String(target_tension_lbs / 10));    
+    set_direction_pull();
+    motors_n_steps (0, pull_speed, true);   
+
+    lcd.clear();
+    lcd.setCursor(0, 1);
+    lcd.print("Hold " + String(target_tension_lbs / 10));    
+
+    for (i=0;i<5*10;i++) {
+      update_tension();
+      if (!limit_switch_pull()) {
+        if (tension_lbs < target_tension_lbs) motors_n_steps(16, pull_speed*4, true);
+      }
+      delay(200);
+    }
+
+    stepper_disengage();
+    delay(1000);
+    update_tension();
+
+  }
+}
+*/
+
+
+
+
+/*
 void load_cell_test()
 {
   update_tension();
-  
   Serial.println(String(tension_int));
-
   delay(1000);
-
 }
+*/
 
 

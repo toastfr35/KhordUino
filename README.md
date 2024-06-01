@@ -56,6 +56,13 @@ KhordUino V1 is available now.
 
 KhordUino V2 is a work in progress and will be made available once fully tested.
 
+## Videos
+
+[Calibration procedure](https://youtu.be/ICjtoKouB5M)
+
+[Using the string puller](https://youtu.be/xCwdWevW81s)
+
+
 ## Updates:
 
 - V1.1 (2024-05-27).  New firmware with easier calibration procedure. 

@@ -93,10 +93,10 @@ module racket_holder_base() {
             translate([0,0,8]) X2(x,y,6.75,3);
         }
         
-        translate([35,17,9])woodscrew_hole();
-        translate([7,14,9])woodscrew_hole();
-        translate([35,-17,9])woodscrew_hole();
-        translate([7,-14,9])woodscrew_hole();
+        #translate([35,17,9])woodscrew_hole();
+        #translate([7,14,9])woodscrew_hole();
+        #translate([35,-17,9])woodscrew_hole();
+        #translate([7,-14,9])woodscrew_hole();
 
     }
 }

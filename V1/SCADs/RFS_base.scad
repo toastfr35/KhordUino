@@ -21,6 +21,23 @@ module center_hole()
     rotate([0,0,25])translate([0,0,-10]) scale([200,245,1])cylinder(100,d=1,$fn=90);
 }
 
+module M5_T_nut()
+{
+    th1=6;
+    dc=0.5;
+
+    cylinder(d=5.5,100);
+    
+    hull(){
+        cylinder(d=8,9);
+        translate([-4+dc/2,4-dc/2,0])cylinder(d=dc,9);
+        translate([4-dc/2,-4+dc/2,0])cylinder(d=dc,9);
+    }
+    
+    translate([0,0,th1/2])cube([8,20,th1],center=true);
+}
+
+
 
 module A() {
     h=10;
@@ -29,7 +46,7 @@ module A() {
     
         difference() {
             translate([0,0,-2])cylinder(h+2,d=330+4,$fn=90);
-            translate([0,0,-10])ring();
+            //translate([0,0,-10])ring();
             center_hole();
             
             // wood screw
@@ -38,8 +55,9 @@ module A() {
             translate([-110,-26,h-3]) woodscrew_hole();                        
             
             // M5
-            translate([-135,0,-3]) cylinder(d=5.5,100);
-            translate([-135,0,2]) cylinder(d=9.5,4.2,$fn=6);
+            //#translate([-137+10,0,-2]) M5_T_nut();
+            translate([-137,0,-2]) M5_T_nut();
+            //#translate([-137-10,0,-2]) M5_T_nut();
             
         }
     

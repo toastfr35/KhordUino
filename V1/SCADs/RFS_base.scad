@@ -23,18 +23,20 @@ module center_hole()
 
 module M5_T_nut()
 {
-    th1=6;
+    th1=5.5;
+    th2=th1+2;
     dc=0.5;
+    w=8.5;
 
     cylinder(d=5.5,100);
     
     hull(){
-        cylinder(d=8,9);
-        translate([-4+dc/2,4-dc/2,0])cylinder(d=dc,9);
-        translate([4-dc/2,-4+dc/2,0])cylinder(d=dc,9);
+        cylinder(d=w,th2);
+        translate([-w/2+dc/2,4-dc/2,0])cylinder(d=dc,th2);
+        translate([w/2-dc/2,-4+dc/2,0])cylinder(d=dc,th2);
     }
     
-    translate([0,0,th1/2])cube([8,20,th1],center=true);
+    translate([0,0,th1/2])cube([w,20,th1],center=true);
 }
 
 
@@ -78,4 +80,5 @@ if (STL==1) {
     translate([0,0,-10-13])A();        
 }    
         
-        
+
+//translate([0,0,50])M5_T_nut();
